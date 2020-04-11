@@ -21,8 +21,7 @@ data Player = AI | P1 | P2
 
 showTurn :: Board -> [Char]
 showTurn board = 
-    ' ':' ':(foldr (\x acc -> if x `mod` 10 == 0 then ((show x )!!0) : ' ' : acc else ' ' : ' ' : acc) [] numbers) ++
-    '\n':' ':' ':(foldr (\x acc -> if x > 9 then ((show x )!!1) : ' ' : acc else ((show x )!!0) : ' ' : acc) [] numbers) ++
+    "\n    " ++ (foldr (\x acc -> if x > 9 then (show x ) ++ "  " ++ acc else (show x ) ++ "   " ++ acc) [] numbers) ++
     showBoard board
     where
         numbers = (take size (iterate (+1) 1))
@@ -37,12 +36,12 @@ showBoard board =
     where
         row = head board
         box = if length board == 1 
-            then '╰':(concat (take ((length row)-1) (repeat "─┴"))) ++ "─╯"
-            else '├':(concat (take ((length row)-1) (repeat "─┼"))) ++ "─┤"
+            then " ╰─" ++ (concat (take ((length row)-1) (repeat "──┴─"))) ++ "──╯" --" ╰─"
+            else " ├─" ++ (concat (take ((length row)-1) (repeat "──┼─"))) ++ "──┤"
 
 showRow :: [Char] -> [Char]
-showRow [] = '│':[] 
-showRow (x:xs) = '│':x:showRow xs
+showRow [] = ' ':'│':[] 
+showRow (x:xs) = " │ " ++ x:showRow xs
 
 --EMPTY BOARD
 
@@ -58,7 +57,7 @@ changeBoard board player c r =
         simbol = case player of
             AI -> 'O'
             P1 -> 'X'
-            P2 -> 'O'
+            P2 -> 'X'
 
 -- Modifica l'element n de la llista
 replace :: Int -> a -> [a] -> [a]
@@ -177,8 +176,8 @@ askColumn board msg = do
 
 showWinner :: Board -> Char -> IO ()
 showWinner board winner
-    | winner == 'X' = putStrLn ((showTurn board) ++ "\n ¡You Won! " ++ (show winner))
-    | winner == 'O' = putStrLn ((showTurn board) ++ "\n ¡You Lost! " ++ (show winner))
+    | winner == 'X' = putStrLn $ (showTurn board) ++ "\n  Winner!!! Good Job " ++ (show winner)
+    | winner == 'O' = putStrLn $ (showTurn board) ++ "\n  Game OVER! - You Lose! " ++ (show winner)
 
 
 {- caca :: [Char] -> Int
@@ -240,13 +239,45 @@ abMinimax color depth board
               Yellow -> (yellowWins, minimum) -}
 
 -- Board Player -> Int -> (Mayb.e..)
+--      top         botom
+lili :: [Char] -> [Char] -> Int
+lili [] _ = 0
+lili _ [] = 0
+lili list1@(l1:l1s) list2@(l2:l2s)
+    | x && t0 && a = 1000 
+    | x && t0 && b = -1000
+    | otherwise = lili l1s l2s
+    where
+        x = length list1 >= 5
+        cut1 = take 5 list1
+        cut2 = take 5 list2
+        m = tail $ init cut1
+        a = all (=='O') m
+        b = all (=='X') m
+
+        t0 = t1 && t2
+        t1 = head cut1 == ' ' && last cut1 == ' '
+        t2 = head cut2 /= ' ' && last cut2 /= ' '
+
+extraScore :: Board -> Int
+extraScore [] = 0
+extraScore (x:xs)
+    | extra == 1000 || extra == -1000 = extra
+    | otherwise = extraScore xs
+    where
+        extra = lili x bottom
+        bottom = if length xs == 0 then replicate (length x) 'N' else head xs
+
 
 coco :: [Char] -> Int
 coco [] = 0
-coco list@(l:ls) 
-    | x && a && not b && n = if numAI == 4 then 1000 else (numAI + coco ls)
-    | x && b && not a && n = if numP1 == -4 then -1000 else (numP1 + coco ls)
-    | otherwise = coco ls
+coco list@(l:ls)
+    | numAI == 4 = 1000
+    | numP1 == -4 = -1000
+    | cc == 1000 || cc == -1000 = coco ls
+    | x && a && not b && n = numAI + cc
+    | x && b && not a && n = numP1 + cc
+    | otherwise = cc
     where
         cuatro = take 4 list
         x = length list >= 4
@@ -255,6 +286,9 @@ coco list@(l:ls)
         n = not (elem 'N' cuatro)
         numAI = length (filter (=='O') cuatro)
         numP1 = -(length (filter (=='X') cuatro))
+        cc = coco ls
+
+
 
 
 rowScore :: Board -> Int
@@ -266,6 +300,7 @@ rowScore (x:xs)
     where
         ar = coco x
         rrs = rowScore xs
+
 
 colScore :: Board -> Int -> Int
 colScore _ 0 = 0
@@ -293,29 +328,31 @@ diaScore board n
         bs = diaScore board (n-1)
         h = length board
 
-scoreBoard2 :: Board -> Int
-scoreBoard2 board 
-    | rs == 1000 || rs == -1000 = rs
+scoreBoard :: Board -> Int
+scoreBoard board 
+    | rs == -1000 || cs == -1000 || ds == -1000 = -1000
+    | rs == 1000 || cs == -1000 || ds == 1000 = 1000
     | cs == 1000 || cs == -1000 = cs
-    | ds == 1000 || ds == -1000 = ds
-    | otherwise = total
+    -- | ds == 1000 || ds == -1000 = ds
+    | extra == 1000 || extra == -1000 = extra
+    | otherwise = total-- + extra
     where 
         rs = rowScore board 
         cs = colScore board (length $ board!!0)
         ds = diaScore board (length board + length (board!!0) -1)
-        total = rs + cs + ds
+        extra = extraScore board
+        total = rs + cs -- + ds
 
 
-scoreBoard :: Board -> Int
-scoreBoard board = 1
 
 otherColor :: Player -> Player
 otherColor AI = P1
 otherColor P1 = AI
+otherColor P2 = AI
 
 abMinimax :: Player -> Int -> Board -> (Maybe Int, Int)
 abMinimax color depth board
-    | depth <= 0 = (Nothing, scoreBoard2 board)
+    | depth <= 0 = (Nothing, scoreBoard board)
     | otherwise =
         let scoresMoves = [(score, c)
                             | c <- [1..width],
@@ -326,11 +363,12 @@ abMinimax color depth board
                             let score = snd . abMinimax (otherColor color) (depth-1) $ board']
         in case find ((== targetScore) . fst) scoresMoves of
             Just (killerScore,killerMove) -> (Just killerMove, killerScore)
-            _ -> let (score,c) = optimum scoresMoves in (Just c, score)
+            _ -> if length scoresMoves /= 0 then let (score,c) = optimum scoresMoves in (Just c, score) else (Nothing,0)
     where
         (targetScore,optimum) = case color of
-            AI -> (1000000, maximum)
-            P1 -> (-1000000, minimum)
+            AI -> (1000, maximum)
+            P1 -> (-1000, minimum)
+            P2 -> (-1000, minimum)
         width = length $ board!!0
 
 
@@ -358,24 +396,34 @@ moveAI board Greedy = do
     else do
         let r = getRow board (c-1)
         return (c,r)
-moveAI board Smart =
-    let (mv, _) = abMinimax AI 5 board
-    in case mv of
+moveAI board Smart = do
+    let (mv, ooo) = abMinimax AI 4 board
+    print((mv,ooo))
+    case mv of
         Just col -> do
             let r = getRow board (col-1)
             return (col,r)
         _ -> putStrLn "No move possible" >> return (1,1)
-    
+
+-- extra AI vs AI
+moveP2 board Smart = do
+    let (mv, ooo) = abMinimax P2 6 board
+    print((mv,ooo))
+    case mv of
+        Just col -> do
+            let r = getRow board (col-1)
+            return (col,r)
+        _ -> putStrLn "No move possible" >> return (1,1)
 
 
 
 play :: Board -> Player -> Strategy -> IO ()
 play board P1 str
     | winner /= '?' = showWinner board winner >> main
-    | isFull board = putStrLn ((showTurn board) ++ "\n ¡Tie! - No more moves") >> main
+    | isFull board = putStrLn ((showTurn board) ++ "\n  That's a TIE") >> main
     | otherwise = do
         --putStrLn $ showTurn $ board 
-        (c,r) <- askColumn board " Your Turn\n Choose Column: "
+        (c,r) <- askColumn board "  Your Turn\n  Choose Column: "
         let next_board = changeBoard board P1 (c-1) (r-1)
         --print (scoreBoard2 board)
         play next_board AI str
@@ -383,19 +431,27 @@ play board P1 str
         winner = checkWinner board
 play board AI str
     | winner /= '?' = showWinner board winner >> main
-    | isFull board = putStrLn ((showTurn board) ++ "\n ¡Tie! - No more moves") >> main
+    | isFull board = putStrLn ((showTurn board) ++ "\n  That's a TIE") >> main
     | otherwise = do
+        putStrLn $ showTurn board ++ "\n  AI Turn\n  Thinking... "
         (c,r) <- moveAI board str
-        putStrLn $ showTurn board ++ "\n AI Turn\n Choose Column: " ++ show(c)
-        --putStrLn (show c)
-        --print (scoreBoard2 board)
-        --print (rowScore board)
-        let next_board = changeBoard board AI (c-1) (r-1)
+        putStrLn $ "\n  Column -> " ++ (show c)
 
-        --putStrLn (show next_board)
-        --putStrLn "ñaña"
-        --putStrLn $ showTurn $ next_board
-        play next_board P1 str  
+        let next_board = changeBoard board AI (c-1) (r-1)
+        play next_board P1 str
+        --play next_board P2 str  
+    where
+        winner = checkWinner board
+play board P2 str
+    | winner /= '?' = showWinner board winner >> main
+    | isFull board = putStrLn ((showTurn board) ++ "\n  That's a TIE") >> main
+    | otherwise = do
+        putStrLn $ showTurn board ++ "\n  P2 Turn\n  Thinking... "
+        (c,r) <- moveP2 board str
+        putStrLn $ "\n  Column -> " ++ (show c)
+
+        let next_board = changeBoard board P2 (c-1) (r-1)
+        play next_board AI str  
     where
         winner = checkWinner board
 
