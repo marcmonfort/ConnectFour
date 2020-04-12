@@ -407,7 +407,7 @@ moveAI board Smart = do
 
 -- extra AI vs AI
 moveP2 board Smart = do
-    let (mv, ooo) = abMinimax P2 6 board
+    let (mv, ooo) = abMinimax P2 4 board
     print((mv,ooo))
     case mv of
         Just col -> do
