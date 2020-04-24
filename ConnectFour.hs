@@ -8,13 +8,20 @@ import System.Random                -- utilitzat per la estrategia Random.
 En aquest blocs, les funciones més generals estan a abaix, i les mes especifiques es troben més amunt. 
 Recomano llegir el codi començant des de el main (a sota de tot), i anar pujant de funció en funció.-}
 
+{- Board sera un tipus sinonim per una matriu de Char (vector de Strings).
+Aporta claredat al definir les funcions -}
 type Board = [[Char]]
 
+{- Nou tipus enumerat per definir les 3 estrategies.
+Ens facilita la desconstrucció del les funcions amb patrons.
+I aporta claredat. -}
 data Strategy = Random | Greedy | Smart
     deriving (Eq)
 
+{- Tipus enumerat per definir els Jugadors.
+Aporta claredat en les funcions, i la deconstrucció en patrons. -}
 data Player = AI | P1 | AI2
-    deriving (Eq,Show)
+    deriving (Eq)
 
 
 
@@ -24,7 +31,7 @@ data Player = AI | P1 | AI2
 -- -- -- -- -- -- -- --
 
 
-{- Retorna un string del tauler i el numero de cada columna, representable per pantalla -}
+{- Retorna un string del tauler i el numero de cada columna, de forma representable per pantalla -}
 showTurn :: Board -> [Char]
 showTurn board = 
     "\n    " ++ (foldr (\x acc -> if x > 9 then (show x ) ++ "  " ++ acc else (show x ) ++ "   " ++ acc) [] numbers) ++     -- Numero de cada columna. Els espais depenen del nombre de digits.
@@ -43,14 +50,19 @@ showBoard (r:rs) =
     showBoard rs
     where
         box = if length rs == 0 
-            then " ╰─" ++ (concat (take ((length r)-1) (repeat "──┴─"))) ++ "──╯"
-            else " ├─" ++ (concat (take ((length r)-1) (repeat "──┼─"))) ++ "──┤"
+            then " ╰─" ++ (concat (take ((length r)-1) (repeat "──┴─"))) ++ "──╯"           -- part final del tauler
+            else " ├─" ++ (concat (take ((length r)-1) (repeat "──┼─"))) ++ "──┤"           -- dibuix del tauler
 
 
 {- Converteix una fila del tauler, de forma comode per representar-ho per pantalla -}
 showRow :: [Char] -> [Char]
 showRow [] = ' ':'│':[] 
-showRow (x:xs) = " │ " ++ x:showRow xs
+showRow (x:xs) = " │ " ++ token:showRow xs
+    where
+        token = case x of       -- Modifiquem les fitxes perque sigui mes comode visualment
+            'X' -> '●' 
+            'O' -> '○' 
+            _ -> x
 
 
 
@@ -59,7 +71,8 @@ showRow (x:xs) = " │ " ++ x:showRow xs
 -- -- -- -- -- -- -- -- --
 
 
-{- Retorna la fitxa guanyadora a la llista de entrada. Si cap, retorna '?' -}
+{- Retorna la fitxa guanyadora a la llista de entrada. Si cap, retorna '?'.
+Comprova per totes les combinacions de quatre posiciones juntes, si hi han quatre fitxes d'un mateix color. -}
 checkWList :: [Char] -> Char
 checkWList [] = '?'
 checkWList list@(l:ls)
@@ -67,10 +80,12 @@ checkWList list@(l:ls)
     | l /= ' ' && same4 = l                         -- Si hi han quatre fitxes iguals juntes, retornem aquesta fitxa guanyadora. 
     | otherwise = checkWList ls                     -- Si no hi ha guanyador, i encara queden fitxes, mirem les seguents posicions.
     where
-        same4 = foldl (\acc x -> acc && (x==l) ) True (take 4 list)     -- True si totes les fitxes de les 4 seguents son iguals.
+        same4 = foldl (\acc x -> acc && (x==l) ) True (take 4 list)     -- True si totes les fitxes de les 4 seguents posicions son iguals.
 
 
-{- Retorna la fitxa guanyadora les files. Si cap, retorna '?' -}
+{- Retorna la fitxa guanyadora les files. Si cap, retorna '?'
+De forma recursiva comprovem totes les files del tauler.
+Anem enviant cada fila a la funció checkWList per comprovar si hi han quatre fitxes en ratlla. -}
 rrrr :: Board -> Char
 rrrr [] = '?'
 rrrr (x:xs)
@@ -80,7 +95,10 @@ rrrr (x:xs)
         winner = checkWList x           -- comprova guanyador a la fila x
 
 
-{- Retorna la fitxa guanyadora a les columnes. Si cap, retorna '?' -}
+{- Retorna la fitxa guanyadora a les columnes. Si cap, retorna '?'.
+De forma recursiva comprovem totes les columnes del tauler.
+La funcio foldr ens crea una llista per la diagonal de la columna "n"
+Aquesta llista es enviada a la funció checkWList per comprovar is hi han quatre fitxes en ratlla. -}
 cccc :: Board -> Int -> Char
 cccc _ 0 = '?'
 cccc board n
@@ -90,7 +108,10 @@ cccc board n
         winner = checkWList (foldr (\x acc -> x!!(n-1) : acc) [] board)     -- comprova guanyador a la columna "n"
 
 
-{- Retorna la fitxa guanyadora a les diagonals. Si cap, retorna '?' -}
+{- Retorna la fitxa guanyadora a les diagonals. Si cap, retorna '?'.
+De forma recursiva anem comprovant totes les diagonals del tauler.
+Amb la funcio foldr hem creat una llista per cada diagonal creixent i decreixent.
+Aquestes llistes son enviades a la funció checkWList per comprovar si hi han quatre fitxes en ratlla-}
 dddd :: Board -> Int -> Char
 dddd _ 0 = '?'
 dddd board n
@@ -103,7 +124,9 @@ dddd board n
         h = length board
 
 
-{- Retorna la fitxa que ha guanya la partida. Si cap ha guanya, retorna '?' -}
+{- Retorna la fitxa que ha guanya la partida. Si cap ha guanyat, retorna '?'.
+El que fem es comprovar totes les combinacions de quatre posicions juntes.
+Ho fem primer per les files, despres per les columnes i finalment per les dues diagonals. -}
 checkWinner :: Board -> Char
 checkWinner board
     | rs /= '?' = rs
@@ -136,7 +159,7 @@ randInt low high = do
 -- -- -- -- -- -- -- --  
 
 
-{- Retorna el maxim nombre de fitxes que podem concatenar del color, la llista i la posició indicada.-}
+{- Retorna el maxim nombre de fitxes que podem concatenar del color en la llista i la posició indicada.-}
 nConnect :: [Char] -> Int -> Char -> Int
 nConnect list pos color = 1 + (length a) + (length b)   -- suma del nombre de fitxes a la esquerra i a la dreta, més la fitxa que posem.
     where
@@ -145,7 +168,9 @@ nConnect list pos color = 1 + (length a) + (length b)   -- suma del nombre de fi
         (left,right) = splitAt pos list                 -- dividim la llista per la posició on posarem la nova fitxa
 
 
-{- Retorna la columna on es pot concatenar el máxim nombre de fitxes del color corresponent, i el valor del maxim -}
+{- Retorna la columna on es pot concatenar el máxim nombre de fitxes del color corresponent, i el valor del maxim.
+Mirem per cada columna, la posició on cuara la fitxa. En aquesta posició mirem el nombre de fitxes que podem concatenar per 
+la fila, la columna, i les dues diagonals. Retornem la columna que pot concatenar mes fitxes. -}
 maxCol :: Board -> Int -> Char -> (Int,Int)
 maxCol board 0 color = (0,0)
 maxCol board c color
@@ -169,7 +194,8 @@ maxCol board c color
 -- -- -- -- -- -- --
 
 
-{- Retorna 500/-500 segons si existeix la situació especial en la llista d'adalt tenint en compte també com es la llista de sota. -}
+{- Retorna 500/-500 segons si existeix la situació especial de victoria amb 3 fitxes
+en la llista d'adalt tenint en compte també com es la llista de sota. -}
 listExtraScore :: [Char] -> [Char] -> Int
 listExtraScore [] _ = 0
 listExtraScore _ [] = 0
@@ -329,16 +355,17 @@ minimax board player depth
 -- -- -- -- -- -- -- --
 
 
-{- Donat un tauler, retorna la posició de la seguent fitxa segons la estrategia. -}
-moveAI :: Board -> Strategy -> IO (Int,Int)
-moveAI board Random = do
+{- Donat un tauler, retorna la posició de la seguent fitxa segons la estrategia.
+Si es smart, tindrem en compte la dificultat seleccionada, que sera la profunditat del minimax -}
+moveAI :: Board -> Strategy -> Int -> IO (Int,Int)
+moveAI board Random _ = do
     c <- randInt 1 (length (board!!0))  -- obtenim una columna de forma aleatoria.
     let r = getRow board (c-1)
     if r == 0 then
-        moveAI board Random             -- si no hi ha cap forat a la columna, obtenim una nova columna.
+        moveAI board Random 0           -- si no hi ha cap forat a la columna, obtenim una nova columna.
     else return (c,r)
 
-moveAI board Greedy = do
+moveAI board Greedy _ = do
     let (c,m) = (maxCol board (length (board!!0)) 'O')      -- Obtenim la columna que ens permet concatenar el maxim nombre de fitxes (m). error ¿i si no hay huecos?
     let (c2,m2) = (maxCol board (length (board!!0)) 'X')    -- Obtenim la columna que permet al contrari concatenar el maxim nombre de fitxes (m2).
     if m2 == 4 && m /= 4 then do
@@ -348,11 +375,11 @@ moveAI board Greedy = do
         let r = getRow board (c-1)                          -- En cas contrari, seleccionem la columna que hem obtingut.
         return (c,r)
 
-moveAI board Smart = do
-    let (c, score) = minimax board AI 4                     -- Obtenim la columna que ens dona més ventatge utilitzant l'algorisme minimax, amb depth 4.
-    print (c,score)                                         -- per debugar heuristica
+moveAI board Smart diff = do
+    let (c, score) = minimax board AI diff                  -- Obtenim la columna que ens dona més ventatge utilitzant l'algorisme minimax, amb depth 4.
+    --print (c,score)                                         -- per debugar heuristica
     case score of
-        (-1000) ->  moveAI board Greedy                     -- Si la partida la te guanyada el contrari, utilitzem greedy per si el contrincant es despista.
+        (-1000) ->  moveAI board Greedy 0                   -- Si la partida la te guanyada el contrari, utilitzem greedy per si el contrincant es despista.
         _ ->
             case c of
                 Just col -> do
@@ -437,23 +464,23 @@ showWinner board winner
 
 
 {- Seguent jugada de la partida.-}
-play :: Board -> Player -> Strategy -> IO ()
-play board player str
+play :: Board -> Player -> Strategy -> Int -> IO ()
+play board player str diff
     | winner /= '?' = showWinner board winner >> main                           -- Cas on un jugador ja ha guanya la partida
     | isFull board = putStrLn ((showTurn board) ++ "\n  That's a TIE") >> main  -- Cas on el tauler esta ple.
 
     | player == P1 = do
-        (c,r) <- askColumn board "  Your Turn\n  Choose Column: "               -- Obtenim la posició de la seguent fitxa
+        (c,r) <- askColumn board "  Your turn\n  Choose column: "               -- Obtenim la posició de la seguent fitxa
         let next_board = changeBoard board P1 (c-1) (r-1)                       -- Obtenim el tauler amb la nova fitxa
-        play next_board AI str                                                  -- Nova jugada (jugador AI)
+        play next_board AI str diff                                             -- Nova jugada (jugador AI)
         
     | otherwise = do                                                            -- Idem. Mateix procediment que aband, ara amb player AI.
-        putStrLn $ showTurn board ++ "\n  AI Turn\n  Thinking... "
-        (c,r) <- moveAI board str                                               -- Obte la posició de la seguent fitxa segons la estrategia str
+        putStrLn $ showTurn board ++ "\n  AI turn\n  thinking... "
+        (c,r) <- moveAI board str diff                                          -- Obte la posició de la seguent fitxa segons la estrategia str
         putStrLn $ "\n  Column -> " ++ (show c)
         let next_board = changeBoard board AI (c-1) (r-1)
-        play next_board P1 str                                                  -- Nova jugada (jugador P1)
-        --play next_board AI2 str 
+        play next_board P1 str diff                                             -- Nova jugada (jugador P1)
+        --play next_board AI2 str diff
     where
         winner = checkWinner board
 
@@ -479,21 +506,24 @@ askInt msg f = do
             else return n
 
 
-{- Driver del programa. Comença una nova partida amb el tamany que indica l'usuari i la estrategia escollida. 
+{- Driver del programa. Comença una nova partida amb el tamany que indica l'usuari i la estrategia escollida.
+Si la estrategia es smart, tambe es pot escollir la dificulatat, que represetara la profunditat de l'algorisme minimax 
 L'usuari (P1) sera el primer jugador de la partida.  -}
 main :: IO ()
 main = do 
     putStrLn "\n\t ¡New Game!\n\t————————————\n Board size:"
 
-    n <- askInt "   Rows = " (>0) 
-    m <- askInt  "   Columns = " (>0)
+    n <- askInt "   Rows    = " (>0) 
+    m <- askInt "   Columns = " (>0)
 
-    putStrLn "\n Strategies:\n   1. random\n   2. greedy\n   3. smart"
-    str <- askInt "Choose strategy: " (\x -> 1<=x && x<=3)
+    putStrLn "\n AI Strategies:\n   1. random\n   2. greedy\n   3. smart"
+    str <- askInt " Choose strategy: " (\x -> 1<=x && x<=3)
     case str of
-        1 -> play (emptyBoard n m) P1 Random
-        2 -> play (emptyBoard n m) P1 Greedy
-        3 -> play (emptyBoard n m) P1 Smart
+        1 -> play (emptyBoard n m) P1 Random 0
+        2 -> play (emptyBoard n m) P1 Greedy 0
+        3 -> do
+            diff <- askInt " Difficulty (recommended 4 or 5) = " (>0)
+            play (emptyBoard n m) P1 Smart diff
 
 
 
