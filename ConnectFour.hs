@@ -1,20 +1,19 @@
-import System.IO (hFlush, stdout)   -- utilitzat per mostra per pantalla missatges sense haber de posar un salt de linia.
+import System.IO (hFlush, stdout)   -- utilitzat per mostra per pantalla missatges sense haver de posar un salt de línia.
 import Text.Read (readMaybe)        -- utilitzat pel tractament d'errors.
-import Data.List (find)             -- utilitzat en el heuristic per simplificar el codi
-import System.Random                -- utilitzat per la estrategia Random.
+import Data.List (find)             -- utilitzat en lheurístic per simplificar el codi
+import System.Random                -- utilitzat per la estratègia Random.
 
 
-{- El codi esta implementat amb blocs de funcionen d'objectius similars.
-En aquest blocs, les funciones més generals estan a abaix, i les mes especifiques es troben més amunt. 
-Recomano llegir el codi començant des de el main (a sota de tot), i anar pujant de funció en funció.-}
+{- El codi està implementat amb blocs de funcions d'objectius similars.
+En aquests blocs, les funcions més generals estan a sota, i les més especifiques es troben més amunt. 
+Recomano llegir el codi començant des del main (a sota de tot), i anar pujant.-}
 
-{- Board sera un tipus sinonim per una matriu de Char (vector de Strings).
-Aporta claredat al definir les funcions -}
+{- Board serà un tipus sinònim a una matriu de Char (vector de Strings).
+Aporta claredat en definir les funcions -}
 type Board = [[Char]]
 
-{- Nou tipus enumerat per definir les 3 estrategies.
-Ens facilita la desconstrucció del les funcions amb patrons.
-I aporta claredat. -}
+{- Tipus enumerat per definir les 3 estratègies.
+Ens facilita la desconstrucció de les funcions amb patrons i aporta claredat. -}
 data Strategy = Random | Greedy | Smart
     deriving (Eq)
 
@@ -31,17 +30,17 @@ data Player = AI | P1 | AI2
 -- -- -- -- -- -- -- --
 
 
-{- Retorna un string del tauler i el numero de cada columna, de forma representable per pantalla -}
+{- Retorna un String del tauler i el número de cada columna, per poder representar-ho per pantalla -}
 showTurn :: Board -> [Char]
 showTurn board = 
-    "\n    " ++ (foldr (\x acc -> if x > 9 then (show x ) ++ "  " ++ acc else (show x ) ++ "   " ++ acc) [] numbers) ++     -- Numero de cada columna. Els espais depenen del nombre de digits.
+    "\n    " ++ (foldr (\x acc -> if x > 9 then (show x ) ++ "  " ++ acc else (show x ) ++ "   " ++ acc) [] numbers) ++     -- Número de cada columna. Els espais depenen del nombre de dígits.
     showBoard board
     where
-        numbers = (take size (iterate (+1) 1))      -- llista dels numeros de les columnes.
-        size = length (head board)                  -- numero total de columnes.
+        numbers = (take size (iterate (+1) 1))      -- llista dels números de les columnes.
+        size = length (head board)                  -- número total de columnes.
 
 
-{- Converteix el Board amb un String representable per pantalla de forma comode. -}
+{- Converteix el Board amb un String representable per pantalla de forma còmode. -}
 showBoard :: Board -> [Char]
 showBoard [] = []
 showBoard (r:rs) = 
@@ -54,14 +53,14 @@ showBoard (r:rs) =
             else " ├─" ++ (concat (take ((length r)-1) (repeat "──┼─"))) ++ "──┤"           -- dibuix del tauler
 
 
-{- Converteix una fila del tauler, de forma comode per representar-ho per pantalla -}
+{- Converteix una fila del tauler en un String per ser representat per pantalla -}
 showRow :: [Char] -> [Char]
 showRow [] = ' ':'│':[] 
 showRow (x:xs) = " │ " ++ token:showRow xs
     where
-        token = case x of       -- Modifiquem les fitxes perque sigui mes comode visualment
-            'X' -> '●' 
-            'O' -> '○' 
+        token = case x of       -- Modifiquem les fitxes perquè siguin més còmodes visualment
+            'O' -> '●' 
+            'X' -> '○' 
             _ -> x
 
 
@@ -71,21 +70,21 @@ showRow (x:xs) = " │ " ++ token:showRow xs
 -- -- -- -- -- -- -- -- --
 
 
-{- Retorna la fitxa guanyadora a la llista de entrada. Si cap, retorna '?'.
-Comprova per totes les combinacions de quatre posiciones juntes, si hi han quatre fitxes d'un mateix color. -}
+{- Retorna la fitxa guanyadora a la llista d'entrada. Si cap, retorna '?'.
+Comprova per totes les combinacions de quatre posiciones juntes, si hi ha quatre fitxes d'un mateix color. -}
 checkWList :: [Char] -> Char
 checkWList [] = '?'
 checkWList list@(l:ls)
-    | length list < 4 = '?'                         -- Si hi han menys de quatre posicions a la llista, ja no pot haber guanyador.
-    | l /= ' ' && same4 = l                         -- Si hi han quatre fitxes iguals juntes, retornem aquesta fitxa guanyadora. 
-    | otherwise = checkWList ls                     -- Si no hi ha guanyador, i encara queden fitxes, mirem les seguents posicions.
+    | length list < 4 = '?'                         -- Si hi ha menys de quatre posicions a la llista, ja no pot haver guanyador.
+    | l /= ' ' && same4 = l                         -- Si hi ha quatre fitxes iguals juntes, retornem aquesta fitxa guanyadora. 
+    | otherwise = checkWList ls                     -- Si no hi ha guanyador, i encara queden fitxes, mirem les següents posicions.
     where
-        same4 = foldl (\acc x -> acc && (x==l) ) True (take 4 list)     -- True si totes les fitxes de les 4 seguents posicions son iguals.
+        same4 = foldl (\acc x -> acc && (x==l) ) True (take 4 list)     -- True si totes les fitxes de les 4 següents posicions són iguals.
 
 
 {- Retorna la fitxa guanyadora les files. Si cap, retorna '?'
 De forma recursiva comprovem totes les files del tauler.
-Anem enviant cada fila a la funció checkWList per comprovar si hi han quatre fitxes en ratlla. -}
+Anem enviant cada fila a la funció checkWList per comprovar si hi ha quatre fitxes en ratlla. -}
 rrrr :: Board -> Char
 rrrr [] = '?'
 rrrr (x:xs)
@@ -97,8 +96,8 @@ rrrr (x:xs)
 
 {- Retorna la fitxa guanyadora a les columnes. Si cap, retorna '?'.
 De forma recursiva comprovem totes les columnes del tauler.
-La funcio foldr ens crea una llista per la diagonal de la columna "n"
-Aquesta llista es enviada a la funció checkWList per comprovar is hi han quatre fitxes en ratlla. -}
+La funció "foldr" ens crea una llista per la diagonal de la columna "n"
+Aquesta llista és enviada a la funció checkWList per comprovar is hi ha quatre fitxes en ratlla. -}
 cccc :: Board -> Int -> Char
 cccc _ 0 = '?'
 cccc board n
@@ -110,8 +109,8 @@ cccc board n
 
 {- Retorna la fitxa guanyadora a les diagonals. Si cap, retorna '?'.
 De forma recursiva anem comprovant totes les diagonals del tauler.
-Amb la funcio foldr hem creat una llista per cada diagonal creixent i decreixent.
-Aquestes llistes son enviades a la funció checkWList per comprovar si hi han quatre fitxes en ratlla-}
+Amb la funció "foldr" hem creat una llista per cada diagonal creixent i decreixent.
+Aquestes llistes són enviades a la funció checkWList per comprovar si hi ha quatre fitxes en ratlla-}
 dddd :: Board -> Int -> Char
 dddd _ 0 = '?'
 dddd board n
@@ -125,8 +124,8 @@ dddd board n
 
 
 {- Retorna la fitxa que ha guanya la partida. Si cap ha guanyat, retorna '?'.
-El que fem es comprovar totes les combinacions de quatre posicions juntes.
-Ho fem primer per les files, despres per les columnes i finalment per les dues diagonals. -}
+El que fem és comprovar totes les combinacions de quatre posicions juntes.
+Ho fem primer per les files, després per les columnes i finalment per les dues diagonals. -}
 checkWinner :: Board -> Char
 checkWinner board
     | rs /= '?' = rs
@@ -159,33 +158,33 @@ randInt low high = do
 -- -- -- -- -- -- -- --  
 
 
-{- Retorna el maxim nombre de fitxes que podem concatenar del color en la llista i la posició indicada.-}
+{- Retorna el maxim nombre de fitxes que podem concatenar del color indicat, en la llista i la posició indicada.-}
 nConnect :: [Char] -> Int -> Char -> Int
-nConnect list pos color = 1 + (length a) + (length b)   -- suma del nombre de fitxes a la esquerra i a la dreta, més la fitxa que posem.
+nConnect list pos color = 1 + (length a) + (length b)   -- suma del nombre de fitxes a l'esquerra i a la dreta, més la fitxa que posem.
     where
         a = takeWhile (==color) (tail (reverse left))   -- llista esquerra de fitxes del mateix color
         b = takeWhile (==color) right                   -- llista dreta de fitxes del mateix color
         (left,right) = splitAt pos list                 -- dividim la llista per la posició on posarem la nova fitxa
 
 
-{- Retorna la columna on es pot concatenar el máxim nombre de fitxes del color corresponent, i el valor del maxim.
-Mirem per cada columna, la posició on cuara la fitxa. En aquesta posició mirem el nombre de fitxes que podem concatenar per 
-la fila, la columna, i les dues diagonals. Retornem la columna que pot concatenar mes fitxes. -}
+{- Retorna la columna on es pot concatenar el màxim nombre de fitxes del color corresponent, i el valor del màxim.
+Mirem per cada columna, la posició on caura la fitxa. En aquesta posició mirem el nombre de fitxes que podem concatenar per 
+la fila, la columna, i les dues diagonals. Retornem la columna que pot concatenar més fitxes. -}
 maxCol :: Board -> Int -> Char -> (Int,Int)
 maxCol board 0 color = (0,0)
 maxCol board c color
     | r > 0 && mmm > m2 = (c,mmm)   -- si la columna c obte el maxim, retornem aquest.
-    | otherwise = (c2,m2)           -- sino, retornem el maxim de la resta de columnes.
+    | otherwise = (c2,m2)           -- sinó, retornem el màxim de la resta de columnes.
     where
         r = getRow board (c-1)
         lc = (foldr (\x acc -> x!!(c-1) : acc) [] board)    -- llista de la columna "c"
         ld = (foldr (\x acc -> if ((n-1-length acc)>=0 && ((n-1-length acc) < (length x)) ) then x!!(n-1-length acc) : acc else ' ':acc) [] board)  -- llista de la diagonal decreixent n
         ld2 = (foldr (\x acc -> if ((n2-h+length acc)>=0 && ((n2-h+length acc) < (length x)) ) then x!!(n2-h+length acc) : acc else ' ':acc) [] board)  -- llista de la diagonal creixent n2
         h = length board
-        n = c + (h - r)     -- corespondencia de la posicio (c,r) amb les diagonals creixents i decreixents en aquell punt
+        n = c + (h - r)     -- corespondència de la posició (c,r) amb les diagonals creixents i decreixents en aquell punt
         n2 = c + (r-1)
-        mmm = maximum [nConnect ld2 r color, nConnect ld r color, nConnect (board!!(r-1)) c color, nConnect lc r color]     -- nombre maxim de fitxes que puc concatenar a la columna "c",
-        (c2,m2) = maxCol board (c-1) color      -- calumna i valor maxim de la resta de les columnes.                       -- mirant files, columnes i les dos diagonals.
+        mmm = maximum [nConnect ld2 r color, nConnect ld r color, nConnect (board!!(r-1)) c color, nConnect lc r color]     -- nombre màxim de fitxes que puc concatenar a la columna "c",
+        (c2,m2) = maxCol board (c-1) color      -- calumna i valor màxim de la resta de les columnes.                       -- mirant files, columnes i les dos diagonals.
 
 
 
@@ -194,8 +193,8 @@ maxCol board c color
 -- -- -- -- -- -- --
 
 
-{- Retorna 500/-500 segons si existeix la situació especial de victoria amb 3 fitxes
-en la llista d'adalt tenint en compte també com es la llista de sota. -}
+{- Retorna 500/-500 segons si existeix la situació especial de victòria amb 3 fitxes
+en la llista de sobre tenint en compte també com es la llista de sota. -}
 listExtraScore :: [Char] -> [Char] -> Int
 listExtraScore [] _ = 0
 listExtraScore _ [] = 0
@@ -204,7 +203,7 @@ listExtraScore ltop@(l1:l1s) lbottom@(l2:l2s)
     | min5 && t0 && x = -500
     | otherwise = listExtraScore l1s l2s
     where
-        min5 = length ltop >= 5     -- minim 5 posiciones pel cas especial
+        min5 = length ltop >= 5     -- mínim 5 posiciones pel cas especial
         cut1 = take 5 ltop
         cut2 = take 5 lbottom
 
@@ -217,10 +216,10 @@ listExtraScore ltop@(l1:l1s) lbottom@(l2:l2s)
         t2 = head cut2 /= ' ' && last cut2 /= ' '
 
 
-{- Retorna 500 si el board es troba en la situació especial de victoria amb 3 fitxes.
-Si hi han 3 fitxes d'un mateix color en ratlla, i la posibilitat de posar una quarta en els dos costats,
-podem assegurar que en dos torns el jugador de les 3 fitxes haura guanyat, ja que el contrari no podra bloquejar els dos costats.
-(sense tenir en compte la posibilitat de que el contrari guanyi al seguent torn, per aixo posem 500, i no 1000) -}
+{- Retorna 500 si el Board es troba en la situació especial de victòria amb 3 fitxes.
+Si hi ha 3 fitxes d'un mateix color en ratlla, i la possibilitat de posar una quarta en els dos costats,
+podem assegurar que en dos torns el jugador de les 3 fitxes haurà guanyat, ja que el contrari no podrà bloquejar els dos costats.
+(sense tenir en compte la possibilitat que el contrari guanyi al següent torn, per això posem 500, i no 1000) -}
 extraScore :: Board -> Int
 extraScore [] = 0
 extraScore (x:xs)
@@ -228,108 +227,107 @@ extraScore (x:xs)
     | otherwise = extraScore xs
     where
         extra = listExtraScore x bottom
-        bottom = if length xs == 0 then replicate (length x) 'N' else head xs   -- fila d'abaix. Si no existeix, afegim una amb tot "N", com si estigues plena.
+        bottom = if length xs == 0 then replicate (length x) 'N' else head xs   -- Fila de sota. Si no existeix, creem una amb tot "N" com si estigués plena.
 
 
-{- Retorna el heuristic de la llista.
-La llsita es pot considerar com una fila, una columna o una diagonal.
-Per cada combinació de quatre casellas juntes, 
-    sumem 3 si hi han 3 caselles de AI i cap mes, 
-    sumem 2 si hi han 2 caselles de AI i cap mes,
-    sumem 1 si hi ha 1 casella de AI i cap mes,
-(El mateix per les caselles de P1 pero en negatiu)
-Si hi han 4 en ratlla, el valor del heuristic sera infinit (1000) per AI i -infinit (-1000) per P1
+{- Retorna l'heurístic de la llista.
+La llista es pot considerar com una fila, una columna o una diagonal.
+Per cada combinació de quatre caselles juntes, 
+    sumem 3 si hi ha 3 caselles de l'AI i cap mes, 
+    sumem 2 si hi ha 2 caselles de l'AI i cap mes,
+    sumem 1 si hi ha 1 casella de l'AI i cap mes,
+(El mateix per les caselles de P1 però en negatiu)
+Si hi ha 4-en-ratlla, el valor de l'heurístic serà infinit (1000) per AI i -infinit (-1000) per P1
 -}
 listScore :: [Char] -> Int
 listScore [] = 0
 listScore list@(l:ls)
-    | numAI == 4 = 1000                         -- valor infinit si hi ha quatre en ratlla en les quatre seguents posicions.
+    | numAI == 4 = 1000                         -- valor infinit si hi ha quatre en ratlla en les quatre següents posicions.
     | numP1 == 4 = -1000
-    | hs == 1000 || hs == -1000 = listScore ls  -- valor infinit si hi ha quatre en ratlla al resta de la llista
-    | min4 && o && not x && n = numAI + hs      -- sumem +(numero_fitxes) si hi han només fitxes de AI
-    | min4 && x && not o && n = -numP1 + hs     -- sumem -(numero_fitxes) si hi han només fitxes de P1
-    | otherwise = hs                            -- si no hi cap fitxa, o hi han fitxes dels dos jugadors, recursivament calculem l'heuristic de la seguent combinació de quatre caselles.
+    | hs == 1000 || hs == -1000 = listScore ls  -- valor infinit si hi ha quatre en ratlla al la resta de la llista
+    | min4 && o && not x && n = numAI + hs      -- sumem +(numero_fitxes) si hi ha només fitxes de AI
+    | min4 && x && not o && n = -numP1 + hs     -- sumem -(numero_fitxes) si hi ha només fitxes de P1
+    | otherwise = hs                            -- si no hi ha cap fitxa, o hi ha fitxes dels dos jugadors, recursivament calculem l'heurístic de la següent combinació de quatre caselles.
     where
-        cuatro = take 4 list                    -- seguent combinació de quatre caselles
+        cuatro = take 4 list                    -- següent combinació de quatre caselles
         min4 = length list >= 4
         o = elem 'O' cuatro
         x = elem 'X' cuatro
         n = not (elem 'N' cuatro)               -- no contem les "N" en la generació de llistes diagonals
         numAI = length (filter (=='O') cuatro)
         numP1 = length (filter (=='X') cuatro)
-        hs = listScore ls                       -- valor del heuristic del resta de la llista.
+        hs = listScore ls                       -- valor de l'heurístic del la resta de la llista.
 
 
-{- Retorna el valor del heuristic de les files -}
+{- Retorna el valor de l'heurístic de les files -}
 rowScore :: Board -> Int
 rowScore [] = 0
 rowScore (x:xs)
-    | rs == 1000 || rs == -1000 = rs        -- si alguna fila te el valor maxim/minim, retornem aquest.
+    | rs == 1000 || rs == -1000 = rs        -- si alguna fila té el valor màxim/mínim, retornem aquest.
     | bs == 1000 || bs == -1000 = bs
     | otherwise = rs + bs
     where
-        rs = listScore x    -- heuristic de la fila
-        bs = rowScore xs    -- heuristic del resta de files
+        rs = listScore x    -- heurístic de la fila
+        bs = rowScore xs    -- heurístic del resta de files
 
 
-{- Retorna el valor del heuristic de les columnes -}
+{- Retorna el valor del heurístic de les columnes -}
 colScore :: Board -> Int -> Int
 colScore _ 0 = 0
 colScore board n
-    | cs == 1000 || cs == -1000 = cs        -- si alguna columna te el valor maxim/minim, retornem aquest.
+    | cs == 1000 || cs == -1000 = cs        -- si alguna columna té el valor màxim/mínim, retornem aquest.
     | bs == 1000 || bs == -1000 = bs
     | otherwise = cs + bs
     where
         column = (foldr (\x acc -> x!!(n-1) : acc) [] board)    -- llista de la columna "n"
-        cs = listScore column       -- heuristic de la columna
-        bs = colScore board (n-1)   -- heuristic de la resta de columnes
+        cs = listScore column       -- heurístic de la columna
+        bs = colScore board (n-1)   -- heurístic de la resta de columnes
 
 
-{- Retorna el valor del heuristic de les diagonals -}
+{- Retorna el valor del heurístic de les diagonals -}
 diaScore :: Board -> Int -> Int
 diaScore _ 0 = 0
 diaScore board n
-    | ds1 == 1000 || ds1 == -1000 = ds1     -- si alguna diagonal te el valor maxim/minim, retornem aquest.
+    | ds1 == 1000 || ds1 == -1000 = ds1     -- si alguna diagonal té el valor màxim/mínim, retornem aquest.
     | ds2 == 1000 || ds2 == -1000 = ds2
     | bs == 1000 || bs == -1000 = bs
     | otherwise = ds1 + ds2 + bs
     where
         diag1 = (foldr (\x acc -> if ((n-1-length acc)>=0 && ((n-1-length acc) < (length x)) ) then x!!(n-1-length acc) : acc else 'N':acc) [] board)   -- llista diagonal decreixent "n"
         diag2 = (foldr (\x acc -> if ((n-h+length acc)>=0 && ((n-h+length acc) < (length x)) ) then x!!(n-h+length acc) : acc else 'N':acc) [] board)   -- llista diagonal creixent "n"
-        ds1 = listScore diag1       -- heuristic de la diagonal.
+        ds1 = listScore diag1       -- heurístic de la diagonal.
         ds2 = listScore diag2
-        bs = diaScore board (n-1)   -- heuristic de la resta de diagonals
+        bs = diaScore board (n-1)   -- heurístic de la resta de diagonals
         h = length board
 
 
-{- Heuristic que calcula el valor del tauler.-}
+{- Heurístic que calcula el valor del tauler.-}
 heuristicBoard :: Board -> Int
 heuristicBoard board 
-    | rs == 1000 || cs == 1000 || ds == 1000 = 1000                 -- Si temim un valor maxim o minim, retornem aquest valor.
+    | rs == 1000 || cs == 1000 || ds == 1000 = 1000                 -- Si temim un valor màxim o mínim, retornem aquest valor.
     | rs == -1000 || cs == -1000 || ds == -1000 = -1000
-    -- | extra == 500 || extra == -500 = extra
     | otherwise = total + extra
     where 
-        rs = rowScore board                                         -- valor heuristic de les files.
-        cs = colScore board (length $ board!!0)                     -- valor heuristic de les columnes
-        ds = diaScore board (length board + length (board!!0) -1)   -- valor heuristic de les diagonals
-        extra = extraScore board                                    -- valor heuristic de situacions especials.
+        rs = rowScore board                                         -- valor heurístic de les files.
+        cs = colScore board (length $ board!!0)                     -- valor heurístic de les columnes
+        ds = diaScore board (length board + length (board!!0) -1)   -- valor heurístic de les diagonals
+        extra = extraScore board                                    -- valor heurístic de situacions especials.
         total = rs + cs + ds
 
 
-{- Retorna el jugador del seguent torn -}
+{- Retorna el jugador del següent torn -}
 nextPlayer :: Player -> Player
 nextPlayer AI = P1
 nextPlayer P1 = AI
 nextPlayer AI2 = AI
 
 
-{- Funcion minimax. Retorna la columna que obte el millor valor segons la heuristica heuristicBoard. -}
+{- Funció minimax. Retorna la columna que obte el millor valor segons la heurística heuristicBoard. -}
 minimax :: Board -> Player -> Int -> (Maybe Int, Int)
 minimax board player depth 
-    | depth <= 0 = (Nothing, heuristicBoard board)                                              -- cas base. Calculem el valor del tauler. Encara no sabem quina es la columna, per aixo Nothing.
+    | depth <= 0 = (Nothing, heuristicBoard board)                                              -- cas base. Calculem el valor del tauler. Encara no sabem quina és la columna, per això Nothing.
     | otherwise =
-        let validMoves = [ (c,r) | c <- [1..width], let r = getRow board (c-1), r > 0]      -- llista posibles columnes on posar una nova fitxa.
+        let validMoves = [ (c,r) | c <- [1..width], let r = getRow board (c-1), r > 0]          -- llista posibles columnes on posar una nova fitxa.
         in case validMoves of
             []  -> (Nothing, heuristicBoard board)                                              -- Si la llista es buida, retornem el valor del tauler actual.
             _   ->
@@ -339,11 +337,11 @@ minimax board player depth
                     Just (endMove, _ ) -> (Just endMove, endScore)                          -- si existeix un tauler on ja hem guanyat, retornem la columna guanyadora.
                     _ -> 
                         let moveScore = [(score, c) | (c, board_c) <- movesBoards, let score = snd $ minimax board_c (nextPlayer player) (depth-1) ]    --llista dels valors de cada nou tauler
-                        in let (score,c) = getMiniMax moveScore in (Just c, score)          -- retornem la columna amb el minim/maxim score.
+                        in let (score,c) = getMiniMax moveScore in (Just c, score)          -- retornem la columna amb el mínim/màxim score.
                             
     where
-        (endScore,getMiniMax) = case player of      -- considerem 1000 com victoria per AI, i -1000 com victoria per P1.
-            AI -> (1000, maximum)                   -- Quan som AI, busquem el maxim valor del heuristic, i quan som P1 busquem el minim.
+        (endScore,getMiniMax) = case player of      -- considerem 1000 com victòria per l'AI, i -1000 com victoria per P1.
+            AI -> (1000, maximum)                   -- L'AI intenta maximitzar el valor de l'heurístic, i P1 intenta minimitzar-lo.
             P1 -> (-1000, minimum)
             AI2 -> (-1000, minimum)
         width = length $ board!!0
@@ -355,8 +353,8 @@ minimax board player depth
 -- -- -- -- -- -- -- --
 
 
-{- Donat un tauler, retorna la posició de la seguent fitxa segons la estrategia.
-Si es smart, tindrem en compte la dificultat seleccionada, que sera la profunditat del minimax -}
+{- Donat un tauler, retorna la posició de la següent fitxa segons l'estratègia.
+Si és "smart", tindrem en compte la dificultat seleccionada, que serà la profunditat del minimax -}
 moveAI :: Board -> Strategy -> Int -> IO (Int,Int)
 moveAI board Random _ = do
     c <- randInt 1 (length (board!!0))  -- obtenim una columna de forma aleatoria.
@@ -366,8 +364,8 @@ moveAI board Random _ = do
     else return (c,r)
 
 moveAI board Greedy _ = do
-    let (c,m) = (maxCol board (length (board!!0)) 'O')      -- Obtenim la columna que ens permet concatenar el maxim nombre de fitxes (m). error ¿i si no hay huecos?
-    let (c2,m2) = (maxCol board (length (board!!0)) 'X')    -- Obtenim la columna que permet al contrari concatenar el maxim nombre de fitxes (m2).
+    let (c,m) = (maxCol board (length (board!!0)) 'O')      -- Obtenim la columna que ens permet concatenar el màxim nombre de fitxes (m).
+    let (c2,m2) = (maxCol board (length (board!!0)) 'X')    -- Obtenim la columna que permet al contrari concatenar el màxim nombre de fitxes (m2).
     if m2 == 4 && m /= 4 then do
         let r = getRow board (c2-1)                         -- Si el contrari pot concatena 4 fitxes i nosaltres no podem, seleccionem aquella columna.
         return (c2,r)                                       
@@ -376,7 +374,7 @@ moveAI board Greedy _ = do
         return (c,r)
 
 moveAI board Smart diff = do
-    let (c, score) = minimax board AI diff                  -- Obtenim la columna que ens dona més ventatge utilitzant l'algorisme minimax, amb depth 4.
+    let (c, score) = minimax board AI diff                  -- Obtenim la columna amb la màxima puntuació utilitzant l'algorisme minimax, amb profunditat diff.
     --print (c,score)                                         -- per debugar heuristica
     case score of
         (-1000) ->  moveAI board Greedy 0                   -- Si la partida la te guanyada el contrari, utilitzem greedy per si el contrincant es despista.
@@ -394,7 +392,7 @@ moveAI board Smart diff = do
 -- -- -- -- -- -- --
 
 
-{- Retorna un tauler buit del tamany indicat -}
+{- Retorna un tauler buit de la mida indicat -}
 emptyBoard :: Int -> Int -> Board
 emptyBoard n m =  replicate n $ replicate m ' '
 
@@ -432,10 +430,10 @@ checkColumn board c
 
 {- Comprova si el tauler esta ple -}
 isFull :: Board -> Bool
-isFull board = all (/=' ') (board!!0)   -- mira si la fila d'amunt esta plena
+isFull board = all (/=' ') (board!!0)   -- mira si la fila de sobre està plena
 
 
-{- Pregunta i obte la columna que l'usuari esculli -}
+{- Pregunta i obté la columna que l'usuari esculli -}
 askColumn :: Board -> [Char] -> IO (Int,Int)
 askColumn board msg = do
     putStrLn $ showTurn $ board     -- mostrem el tauler actual
@@ -444,39 +442,39 @@ askColumn board msg = do
     input <- getLine
     let col = readMaybe input :: Maybe Int
     case col of
-        Nothing -> putStrLn ("\t\x1b[31mERROR: Should be Integer\x1b[0m") >> askColumn board msg    -- si no es un enter, indiquem l'error i tornem a preguntar.
+        Nothing -> putStrLn ("\t\x1b[31mERROR: Should be Integer\x1b[0m") >> askColumn board msg    -- si no és un enter, indiquem l'error i tornem a preguntar.
         Just c -> 
             if not $ checkColumn board c then do
-                putStrLn ("\t\x1b[31mERROR: Invalid column \x1b[0m") >> askColumn board msg         -- si no es una columna valida, tornem a preguntar.
+                putStrLn ("\t\x1b[31mERROR: Invalid column \x1b[0m") >> askColumn board msg         -- si no és una columna valida, tornem a preguntar.
             else do
                 let r = getRow board (c-1)
                 if r == 0 then do
-                    putStrLn ("\t\x1b[31mERROR: No empty holes in column \x1b[0m" ++ (show c)) >> askColumn board msg   -- si la columna esta plena, tornem a preguntar.
+                    putStrLn ("\t\x1b[31mERROR: No empty holes in column \x1b[0m" ++ (show c)) >> askColumn board msg   -- si la columna està plena, tornem a preguntar.
                 else
-                    return (c,r)    -- retornem la columna i la fila de la seguent fitxa.
+                    return (c,r)    -- retornem la columna i la fila de la següent fitxa.
 
 
-{- Mostra missatge de si l'usuari ha guanya o ha perdut -}
+{- Mostra missatge de si l'usuari ha guanyat o ha perdut -}
 showWinner :: Board -> Char -> IO ()
 showWinner board winner
     | winner == 'X' = putStrLn $ (showTurn board) ++ "\n\n\x1b[32m  Winner!!! Good Job \x1b[0m\n"-- ++ (show winner)
-    | winner == 'O' = putStrLn $ (showTurn board) ++ "\n\n\x1b[31m  Game OVER! - You Lose! \x1b[0m\n"-- ++ (show winner)
+    | winner == 'O' = putStrLn $ (showTurn board) ++ "\n\n\x1b[31m  Game OVER! - You've lost! \x1b[0m\n"-- ++ (show winner)
 
 
 {- Seguent jugada de la partida.-}
 play :: Board -> Player -> Strategy -> Int -> IO ()
 play board player str diff
-    | winner /= '?' = showWinner board winner >> main                           -- Cas on un jugador ja ha guanya la partida
-    | isFull board = putStrLn ((showTurn board) ++ "\n  That's a TIE") >> main  -- Cas on el tauler esta ple.
+    | winner /= '?' = showWinner board winner >> main                         -- Cas on un jugador ja ha guanya la partida
+    | isFull board = putStrLn ((showTurn board) ++ "\n  It's a TIE") >> main  -- Cas on el tauler esta ple.
 
     | player == P1 = do
-        (c,r) <- askColumn board "  Your turn\n  Choose column: "               -- Obtenim la posició de la seguent fitxa
+        (c,r) <- askColumn board "  Your turn\n  Choose column: "               -- Obtenim la posició de la següent fitxa
         let next_board = changeBoard board P1 (c-1) (r-1)                       -- Obtenim el tauler amb la nova fitxa
         play next_board AI str diff                                             -- Nova jugada (jugador AI)
         
-    | otherwise = do                                                            -- Idem. Mateix procediment que aband, ara amb player AI.
+    | otherwise = do                                                            -- Ídem. Mateix procediment que abans, ara amb player AI.
         putStrLn $ showTurn board ++ "\n  AI turn\n  thinking... "
-        (c,r) <- moveAI board str diff                                          -- Obte la posició de la seguent fitxa segons la estrategia str
+        (c,r) <- moveAI board str diff                                          -- Obté la posició de la següent fitxa segons l'estratègia "str"
         putStrLn $ "\n  Column -> " ++ (show c)
         let next_board = changeBoard board AI (c-1) (r-1)
         play next_board P1 str diff                                             -- Nova jugada (jugador P1)
@@ -506,9 +504,9 @@ askInt msg f = do
             else return n
 
 
-{- Driver del programa. Comença una nova partida amb el tamany que indica l'usuari i la estrategia escollida.
-Si la estrategia es smart, tambe es pot escollir la dificulatat, que represetara la profunditat de l'algorisme minimax 
-L'usuari (P1) sera el primer jugador de la partida.  -}
+{- Driver del programa. Comença una nova partida amb la mida que indica l'usuari i l'estratègia escollida.
+Si l'estratègia és smart, també es pot escollir la dificultat, que represetarà la profunditat de l'algorisme minimax 
+L'usuari (P1) serà el primer jugador de la partida.  -}
 main :: IO ()
 main = do 
     putStrLn "\n\t ¡New Game!\n\t————————————\n Board size:"
